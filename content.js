@@ -53,8 +53,10 @@ function ensureVideoContainerRelativePosition() {
     const videoElement = document.querySelector('video');
   
     if (videoElement) {
+      // Selecciona el contenedor del video o el propio video
       const videoContainer = videoElement.parentElement;
   
+      // Verifica si tiene position que no sea relative
       const computedStyle = window.getComputedStyle(videoContainer);
       if (computedStyle.position !== 'relative') {
         videoContainer.style.position = 'relative';
@@ -76,6 +78,7 @@ function getStoredValue(key, defaultValue) {
 
 // Función para aplicar los estilos almacenados a los subtítulos
 async function applyStoredStyles() {
+    // Recupera los valores almacenados
     const [originalSubtitleSize, translatedSubtitleSize, originalSubtitleColor, translatedSubtitleColor, translatedSubtitleBackgroundColor] = await Promise.all([
       getStoredValue('originalSubtitleSize', '16'),
       getStoredValue('translatedSubtitleSize', '16'),
@@ -84,12 +87,14 @@ async function applyStoredStyles() {
       getStoredValue('translatedSubtitleBackgroundColor', '#232628')
     ]);
 
+    // Cambia el estilo de los subtítulos originales
     const originalSubtitles = document.querySelectorAll('[data-purpose="captions-cue-text"]');
     originalSubtitles.forEach(subtitle => {
       if (originalSubtitleSize) subtitle.style.fontSize = originalSubtitleSize;
       if (originalSubtitleColor) subtitle.style.color = originalSubtitleColor;
     });
 
+    // Cambia el estilo de los subtítulos traducidos
     const translatedSubtitles = document.querySelectorAll('.translated-subtitle');
     translatedSubtitles.forEach(subtitle => {
       if (translatedSubtitleSize) subtitle.style.fontSize = translatedSubtitleSize;
@@ -97,6 +102,7 @@ async function applyStoredStyles() {
       if (translatedSubtitleBackgroundColor) subtitle.style.backgroundColor = translatedSubtitleBackgroundColor;
     });
 
+    // Devuelve los estilos aplicados
     return {
       originalSubtitleSize,
       translatedSubtitleSize,
@@ -131,8 +137,10 @@ async function processSubtitles() {
           // Calcula la posición del subtítulo original
           const rect = subtitleElement.getBoundingClientRect();
   
+          // Obtener los estilos almacenados
           const styles = await applyStoredStyles();
 
+          // Crea un nuevo elemento para mostrar el subtítulo traducido
           let translatedElement = document.createElement('div');
           translatedElement.style.fontSize = styles.translatedSubtitleSize;
           translatedElement.style.opacity = getComputedStyle(subtitleElement).opacity;
@@ -151,12 +159,13 @@ async function processSubtitles() {
           translatedElement.className = 'translated-subtitle';
   
           translatedElement.innerText = translatedSubtitle;
-
+          // Remueve cualquier subtítulo traducido previo
           const previousTranslation = subtitleElement.nextSibling;
           if (previousTranslation && previousTranslation.className === 'translated-subtitle') {
             previousTranslation.remove();
           }
   
+          // Inserta el subtítulo traducido justo debajo del original
           subtitleElement.parentNode.insertBefore(translatedElement, subtitleElement.nextSibling);
         } catch (error) {
           console.error('Error al procesar el subtítulo:', error);
@@ -186,6 +195,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         translatedSubtitleBackgroundColor
       } = request;
   
+      // Guarda los estilos en el almacenamiento local
       chrome.storage.local.set({
         originalSubtitleSize,
         translatedSubtitleSize,
