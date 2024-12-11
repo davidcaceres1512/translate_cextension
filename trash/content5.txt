@@ -1,0 +1,103 @@
+// content.js
+
+// URL de tu servidor local de LibreTranslate
+const translateApiUrl = 'http://localhost:5000/translate';
+
+// Función para traducir el texto usando LibreTranslate
+async function translateText(text, sourceLang = 'en', targetLang = 'es') {
+  try {
+    const response = await fetch(translateApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: text,
+        source: sourceLang,
+        target: targetLang,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error en la traducción');
+    }
+
+    const data = await response.json();
+    return data.translatedText || '';  // Asegúrate de manejar el caso en que no haya traducción
+  } catch (error) {
+    console.error('Error al traducir el texto:', error);
+    return null;
+  }
+}
+
+// Función para observar cambios en los subtítulos
+function observeSubtitles() {
+  const checkInterval = 1000; // Intervalo en milisegundos
+  const maxAttempts = 18; // Número máximo de intentos
+  let attempts = 0;
+
+  function tryFindContainer() {
+    // Utiliza el atributo data-purpose para seleccionar el contenedor
+    //const subtitleContainer = document.querySelector('[data-purpose="captions-cue-text"]');
+    const subtitleContainer = document.querySelector('.captions-display--captions-cue-text--TQ0DQ');
+    console.log('subtitleContainer:', subtitleContainer);
+    if (subtitleContainer) {
+      console.log('Contenedor de subtítulos encontrado.');
+
+      // Observa cambios en los subtítulos
+      const observer = new MutationObserver((mutationsList) => {
+        console.log('MutationObserver detectó cambios:', mutationsList);
+        for (const mutation of mutationsList) {
+          if (mutation.type === 'childList') {
+            const originalSubtitle = mutation.target.innerText.trim();
+            console.log('Texto del subtítulo original:', originalSubtitle);
+
+            // Traduce el subtítulo
+            translateText(originalSubtitle, 'en', 'es').then((translatedSubtitle) => {
+              console.log('Subtítulo traducido:', translatedSubtitle);
+              if (translatedSubtitle) {
+                // Crea un nuevo elemento para mostrar el subtítulo traducido
+                let translatedElement = document.createElement('div');
+                translatedElement.style.fontSize = '1rem'; // Ajusta el tamaño de fuente para la traducción
+                translatedElement.style.opacity = '0.75'; // Mantén la opacidad similar
+                translatedElement.style.color = 'yellow'; // Cambia el color del texto traducido para diferenciarlo
+                translatedElement.style.position = 'absolute'; // Asegúrate de que el nuevo subtítulo esté sobre el subtítulo original
+                translatedElement.style.left = '0'; // Ajusta la posición si es necesario
+                translatedElement.style.top = '0'; // Ajusta la posición si es necesario
+                translatedElement.style.width = '100%'; // Ajusta el ancho para que cubra el subtítulo original
+
+                translatedElement.innerText = translatedSubtitle;
+
+                // Remueve cualquier subtítulo traducido previo
+                const previousTranslation = mutation.target.nextSibling;
+                if (previousTranslation && previousTranslation.className === 'translated-subtitle') {
+                  previousTranslation.remove();
+                }
+
+                // Añade la clase personalizada para el subtítulo traducido
+                translatedElement.className = 'translated-subtitle';
+
+                // Inserta el subtítulo traducido justo debajo del original
+                mutation.target.parentNode.insertBefore(translatedElement, mutation.target.nextSibling);
+              }
+            });
+          }
+        }
+      });
+
+      // Configura el observer para observar cambios en los hijos del contenedor
+      observer.observe(subtitleContainer, { childList: true, subtree: true });
+    } else if (attempts < maxAttempts) {
+      attempts++;
+      console.warn(`Contenedor de subtítulos no encontrado. Reintentando... (Intento ${attempts}/${maxAttempts})`);
+      setTimeout(tryFindContainer, checkInterval);
+    } else {
+      console.warn('No se pudo encontrar el contenedor de subtítulos después de varios intentos.');
+    }
+  }
+
+  tryFindContainer();
+}
+
+// Ejecuta la observación de subtítulos cuando la página esté cargada
+window.addEventListener('load', observeSubtitles);

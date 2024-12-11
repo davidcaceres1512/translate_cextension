@@ -1,0 +1,91 @@
+// URL de tu servidor local de LibreTranslate
+const translateApiUrl = 'http://localhost:5000/translate';
+
+// Función para traducir el texto usando LibreTranslate
+async function translateText(text, sourceLang = 'en', targetLang = 'es') {
+  try {
+    const response = await fetch(translateApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        q: text,
+        source: sourceLang,
+        target: targetLang,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error en la traducción');
+    }
+
+    const data = await response.json();
+    return data.translatedText || '';  // Asegúrate de manejar el caso en que no haya traducción
+  } catch (error) {
+    console.error('Error al traducir el texto:', error);
+    return null;
+  }
+}
+
+// Función para procesar y traducir los subtítulos
+async function processSubtitles() {
+    const subtitleContainer = document.querySelector('.captions-display--captions-container--PqdGQ');
+  
+    if (subtitleContainer) {
+      console.log('Contenedor de subtítulos encontrado.');
+  
+      const subtitleElement = subtitleContainer.querySelector('[data-purpose="captions-cue-text"]');
+  
+      if (subtitleElement) {
+        const originalSubtitle = subtitleElement.innerText.trim();
+        console.log('Texto del subtítulo original:', originalSubtitle);
+  
+        try {
+          const translatedSubtitle = await translateText(originalSubtitle, 'en', 'es');
+          console.log('Subtítulo traducido:', translatedSubtitle);
+  
+          if (translatedSubtitle) {
+            // Calcula la posición del subtítulo original
+            const rect = subtitleElement.getBoundingClientRect();
+            console.log('rect.left:', rect.left);
+            console.log('rect.bottom:', rect.bottom);
+  
+            // Crea un nuevo elemento para mostrar el subtítulo traducido
+            let translatedElement = document.createElement('div');
+            translatedElement.style.fontSize = getComputedStyle(subtitleElement).fontSize; // Usa el mismo tamaño de fuente
+            translatedElement.style.opacity = getComputedStyle(subtitleElement).opacity; // Usa la misma opacidad
+            translatedElement.style.color = 'yellow'; // Cambia el color del texto traducido para diferenciarlo
+            translatedElement.style.position = 'absolute'; // Posiciona el nuevo subtítulo
+            translatedElement.style.left = `${Math.round(rect.left)}px`; // Ajusta la posición horizontal
+            translatedElement.style.top = `${Math.round(rect.bottom)}px`; // Ajusta la posición vertical
+            translatedElement.style.width = `${Math.round(rect.width)}px`; // Ajusta el ancho
+            translatedElement.style.textAlign = getComputedStyle(subtitleElement).textAlign; // Usa la misma alineación
+            translatedElement.style.zIndex = '9999'; // Asegúrate de que el subtítulo traducido esté sobre el subtítulo original
+            translatedElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'; // Fondo semitransparente para mayor visibilidad
+            translatedElement.className = 'translated-subtitle';
+  
+            translatedElement.innerText = translatedSubtitle;
+  
+            // Remueve cualquier subtítulo traducido previo
+            const previousTranslation = subtitleElement.nextSibling;
+            if (previousTranslation && previousTranslation.className === 'translated-subtitle') {
+              previousTranslation.remove();
+            }
+  
+            // Inserta el subtítulo traducido justo debajo del original
+            subtitleElement.parentNode.insertBefore(translatedElement, subtitleElement.nextSibling);
+          }
+        } catch (error) {
+          console.error('Error al traducir el subtítulo:', error);
+        }
+      }
+    } else {
+      console.warn('Contenedor de subtítulos no encontrado. Reintentando...');
+    }
+  }
+  
+  // Configura el polling para verificar periódicamente
+  const pollingInterval = 1000; // Intervalo en milisegundos (1 segundo)
+  setInterval(processSubtitles, pollingInterval);
+  

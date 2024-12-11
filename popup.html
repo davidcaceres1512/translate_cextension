@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subtitle Translator</title>
+  <!-- Incluye jQuery desde el proyecto local -->
+  <script src="assets/js/jquery-3.6.0.min.js"></script>
+  <!-- Incluye el CSS de Spectrum desde el proyecto local -->
+  <link rel="stylesheet" href="assets/spectrum-2.0.10/dist/spectrum.min.css">
+    <style>
+        body {
+            width: 300px; /* Ajusta el ancho según sea necesario */
+            height: 400px; /* Ajusta la altura según sea necesario */
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden; /* Evita el desbordamiento */
+        }
+    </style>
+</head>
+<body>
+  <h1>Subtitle Translator</h1>
+
+  <label for="original-size">Original Subtitle Size:</label>
+  <input type="range" id="original-size" min="10" max="100" value="16">
+  <span id="original-size-value">16px</span>
+
+  <label for="translated-size">Translated Subtitle Size:</label>
+  <input type="range" id="translated-size" min="10" max="100" value="16">
+  <span id="translated-size-value">16px</span>
+
+  <div class="color-picker">
+    <label for="original-color">Original Subtitle Color:</label>
+    <input type="text" id="original-color" class="color-picker-input">
+  </div>
+
+  <div class="color-picker">
+    <label for="translated-color">Translated Subtitle Color:</label>
+    <input type="text" id="translated-color" class="color-picker-input">
+  </div>
+
+  <div class="color-picker">
+    <label for="translated-bg-color">Translated Subtitle Background Color:</label>
+    <input type="text" id="translated-bg-color" class="color-picker-input">
+  </div>
+
+  <!-- Incluye el JS de Spectrum desde el proyecto local -->
+  <script src="assets/spectrum-2.0.10/dist/spectrum.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
